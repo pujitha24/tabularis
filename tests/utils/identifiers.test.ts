@@ -209,7 +209,14 @@ describe('formatSqlIdentifier', () => {
         expect(formatSqlIdentifier('Status', 'mysql')).toBe('Status');
         expect(formatSqlIdentifier('user_status', 'mariadb')).toBe('user_status');
         expect(formatSqlIdentifier('AccountEventLog', 'mysql')).toBe('AccountEventLog');
-        expect(formatSqlIdentifier('select', 'mysql')).toBe('select');
+    });
+
+    it('should quote reserved words and special characters for mysql and sqlite', () => {
+        expect(formatSqlIdentifier('select', 'mysql')).toBe('`select`');
+        expect(formatSqlIdentifier('global-conf_modulos', 'mysql')).toBe('`global-conf_modulos`');
+        expect(formatSqlIdentifier('my table', 'mariadb')).toBe('`my table`');
+        expect(formatSqlIdentifier('1abc', 'mysql')).toBe('`1abc`');
+        expect(formatSqlIdentifier('my-table', 'sqlite')).toBe('"my-table"');
     });
 
     it('should leave identifiers unchanged for sqlite and unknown drivers', () => {

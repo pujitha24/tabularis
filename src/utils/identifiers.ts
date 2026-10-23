@@ -114,15 +114,24 @@ const PG_RESERVED = new Set([
     'offset',
 ]);
 
+// Other dialects keep case, so only reserved words and names that are not a
+// plain word (hyphens, spaces, leading digit, ...) need quoting.
+const PLAIN_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_$]*$/;
+
 /**
- * Formats a SQL identifier for WHERE / ORDER BY fragments.
- * Quotes only when required (PostgreSQL); otherwise returns the name unchanged.
+ * Formats a SQL identifier for autocomplete, WHERE / ORDER BY fragments.
+ * Quotes only when required: PostgreSQL also for mixed case, other dialects for
+ * reserved words and names with special characters.
  */
 export function formatSqlIdentifier(
     identifier: string,
     driver: string | PluginManifest | DriverCapabilities | null | undefined,
 ): string {
-    if (!shouldQuoteIdentifiers(driver)) return identifier;
+    if (!shouldQuoteIdentifiers(driver)) {
+        return PLAIN_IDENTIFIER.test(identifier) && !PG_RESERVED.has(identifier.toLowerCase())
+            ? identifier
+            : quoteIdentifier(identifier, driver);
+    }
     if (PG_SAFE_IDENTIFIER.test(identifier) && !PG_RESERVED.has(identifier)) {
         return identifier;
     }
